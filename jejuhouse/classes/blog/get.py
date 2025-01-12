@@ -10,12 +10,19 @@ import os
 from pathlib import Path
 
 
-def get_data(CLIENT_ID, CLIENT_SECRET):
-    """블로그 데이터를 수집하고 저장합니다."""
-    # 기존 링크 로드
-    existing_links = load_existing_links()
+def get_data(self):
+    # 기존 데이터 로드
+    data_file = '../latest_NaverBlog_link.pkl'
+    if os.path.exists(data_file):
+        with open(data_file, 'rb') as f:
+            stored_posts = pickle.load(f)
+        # 기존 링크들의 집합 생성
+        existing_links = {post['링크'] for post in stored_posts}
+    else:
+        stored_posts = []
+        existing_links = set()
 
-    # 키워드 생성
+    # 키워드 생성 및 검색
     keywords = generate_keywords()
     print(f"총 {len(keywords)}개의 검색 키워드가 생성되었습니다.")
 
@@ -25,21 +32,19 @@ def get_data(CLIENT_ID, CLIENT_SECRET):
     start_date_str = start_date.strftime('%Y-%m-%d')
     end_date_str = end_date.strftime('%Y-%m-%d')
 
-    all_posts = []
-    new_links = set()
+    new_posts = []
 
-    # 각 키워드별로 검색 수행
     for keyword in keywords:
         print(f"\n키워드 '{keyword}' 검색 중...")
-
-        # 블로그 포스트 검색
-        blog_posts = get_blog_posts(keyword, CLIENT_ID, CLIENT_SECRET, existing_links)
+        blog_posts = get_blog_posts(keyword, self.CLIENT_ID, self.CLIENT_SECRET, existing_links)
 
         if blog_posts:
             period_posts = []
 
-            # 검색된 포스트 처리
             for post in blog_posts:
+                if post['link'] in existing_links:
+                    continue
+
                 post_date = datetime.strptime(post['postdate'], '%Y%m%d').strftime('%Y-%m-%d')
 
                 if check_date_in_range(post_date, start_date_str, end_date_str):
@@ -58,29 +63,34 @@ def get_data(CLIENT_ID, CLIENT_SECRET):
                     }
 
                     period_posts.append(post_data)
-                    new_links.add(post['link'])
+                    existing_links.add(post['link'])
                     print(f"처리 중: {len(period_posts)}/{len(blog_posts)} - {title}")
                     time.sleep(1)
 
-            all_posts.extend(period_posts)
+            new_posts.extend(period_posts)
             print(f"키워드 '{keyword}' 검색 완료: {len(period_posts)}개의 포스트 수집")
         else:
             print(f"키워드 '{keyword}' 검색 결과를 가져오는데 실패했습니다.")
 
-    if all_posts:
-        # 새로운 링크들을 저장
-        save_links(existing_links, new_links)
+    if new_posts:
+        # 기존 데이터와 새로운 데이터 병합
+        stored_posts.extend(new_posts)
 
-        # JSON 파일 저장
+        # PKL 파일 저장 (상위 폴더에)
+        with open(data_file, 'wb') as f:
+            pickle.dump(stored_posts, f)
+
+        # JSON 파일도 함께 저장 (outputs 폴더에)
         output_dir = Path('outputs')
         output_dir.mkdir(exist_ok=True)
 
         filename = output_dir / f'jeju_realestate_{start_date_str}_{end_date_str}.json'
         with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(all_posts, f, ensure_ascii=False, indent=2)
+            json.dump(new_posts, f, ensure_ascii=False, indent=2)
 
         print(f"\n검색 기간: {start_date_str} ~ {end_date_str}")
-        print(f"총 {len(all_posts)}개의 포스트를 수집했습니다.")
+        print(f"총 {len(new_posts)}개의 새로운 포스트를 수집했습니다.")
+        print(f"누적 데이터 건수: {len(stored_posts)}개")
         print(f"결과가 {filename}에 저장되었습니다.")
     else:
         print("\n검색된 결과가 없습니다.")
