@@ -261,7 +261,6 @@ def main(period="오늘"):
                         title = BeautifulSoup(title, 'html.parser').get_text()
 
                     post_data = {
-                        '검색어': keyword,
                         '블로그 제목': title,
                         '링크': post['link'],
                         '작성일자': post_date,
