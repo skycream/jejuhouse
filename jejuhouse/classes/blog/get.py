@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import urllib.parse
 import urllib.request
 import time
+<<<<<<< HEAD
 import pickle
 import os
 from pathlib import Path
@@ -120,6 +121,11 @@ def generate_keywords():
 
 
 def get_blog_posts(keyword, CLIENT_ID, CLIENT_SECRET, existing_links):
+=======
+
+
+def get_blog_posts(self, keyword, total_count=1000):
+>>>>>>> 1fee861fa2b56ce8150aff7a982d343a8bc44df6
     """네이버 블로그 검색 API를 통해 블로그 포스트를 검색합니다."""
     encText = urllib.parse.quote(keyword)
     all_items = []
