@@ -2,30 +2,74 @@ import json
 import re
 import requests
 import bs4
+import pickle
+import time
+import os
 
 def get_data(self):
-    a = clawer(self)
+    # 마지막 pkl파일에 삽입된 매물번호를 불러오기, 
+    # pkl 파일이 없으면 pkl 파일을 생성하고 4406936로 삽입
+    data_list = []
+    data = False
+    while data is not None:
+        try:
+            # 파일 존재 여부 확인 및 데이터 로드
+            if os.path.exists('latest_oiljang_property_num.pkl'):
+                with open('latest_oiljang_property_num.pkl', 'rb') as f:
+                    last_num = pickle.load(f)
+            else:
+                raise FileNotFoundError
+        except (FileNotFoundError, EOFError):  # 파일이 없거나 비어 있을 경우 기본값 설정
+            last_num = 4407310
+            with open('latest_oiljang_property_num.pkl', 'wb') as f:
+                pickle.dump(last_num, f)
+            print(f"초기 매물 번호 {last_num}으로 설정되었습니다.")
+
+        print(f"현재 매물 번호: {last_num}")
+        data = crawler(last_num)
+
+        if data is not None:
+            # 다음 매물 번호 저장
+            with open('latest_oiljang_property_num.pkl', 'wb') as f:
+                pickle.dump(last_num + 1, f)
+            print(data)
+            print('매물을 찾았습니다. 계속해서 다음 매물을 찾습니다.')
+            data_list.append(json.loads(data))
+            print(f"현재 데이터 수: {len(data_list)}")
+            print(data_list[-1]['매물명'])
+            time.sleep(1)
+        else:
+            print("매물이 없거나 에러가 발견되었습니다. 종료합니다.")
+            break
 
 
-def clawer(self):
-    cur_num = '4406936'
-    res = requests.get(self.url + cur_num)
-    res.encoding = 'utf-8'
-    html = res.text
-    bs = bs4.BeautifulSoup(html, 'html.parser')
-    rows = bs.select("table.info_t tr")
-    table_data = set_table_data(rows)
+    
 
-    # detail_data 처리: Tag 객체를 문자열로 변환
-    detail_data = bs.select_one("div.detail_text_cont")
-    if detail_data:
-        table_data['상세정보'] = detail_data.decode_contents().strip()  # 문자열로 변환
-    else:
-        table_data['상세정보'] = None
 
-    total_data = table_data
-    json_data = json.dumps(total_data, ensure_ascii=False, indent=4)
-    print(json_data)
+def crawler(last_num):
+    try:
+        search_num = str(last_num + 1)
+        url = 'https://www.jejuall.com/CProperty/detail?num='
+        res = requests.get(url + search_num)
+        res.encoding = 'utf-8'
+        html = res.text
+        bs = bs4.BeautifulSoup(html, 'html.parser')
+        rows = bs.select("table.info_t tr")
+        table_data = set_table_data(rows)
+
+        # detail_data 처리: Tag 객체를 문자열로 변환
+        detail_data = bs.select_one("div.detail_text_cont")
+        if detail_data:
+            table_data['상세정보'] = detail_data.decode_contents().strip()  # 문자열로 변환
+        total_data = table_data
+        if total_data == {}:
+            return None
+        else:
+            json_data = json.dumps(total_data, ensure_ascii=False, indent=4)
+            return json_data
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
 
 
 def set_table_data(table_html_data):
