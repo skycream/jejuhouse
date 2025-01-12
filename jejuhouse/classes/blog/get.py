@@ -5,13 +5,12 @@ from bs4 import BeautifulSoup
 import urllib.parse
 import urllib.request
 import time
-<<<<<<< HEAD
 import pickle
 import os
 from pathlib import Path
 
 
-def get_data(self):
+def get_data(CLIENT_ID, CLIENT_SECRET):
     """블로그 데이터를 수집하고 저장합니다."""
     # 기존 링크 로드
     existing_links = load_existing_links()
@@ -34,7 +33,7 @@ def get_data(self):
         print(f"\n키워드 '{keyword}' 검색 중...")
 
         # 블로그 포스트 검색
-        blog_posts = get_blog_posts(keyword, self.CLIENT_ID, self.CLIENT_SECRET, existing_links)
+        blog_posts = get_blog_posts(keyword, CLIENT_ID, CLIENT_SECRET, existing_links)
 
         if blog_posts:
             period_posts = []
@@ -121,11 +120,6 @@ def generate_keywords():
 
 
 def get_blog_posts(keyword, CLIENT_ID, CLIENT_SECRET, existing_links):
-=======
-
-
-def get_blog_posts(self, keyword, total_count=1000):
->>>>>>> 1fee861fa2b56ce8150aff7a982d343a8bc44df6
     """네이버 블로그 검색 API를 통해 블로그 포스트를 검색합니다."""
     encText = urllib.parse.quote(keyword)
     all_items = []
