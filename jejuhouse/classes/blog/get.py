@@ -6,12 +6,8 @@ import urllib.parse
 import urllib.request
 import time
 
-# 네이버 API 키 설정
-CLIENT_ID = "GM5tk79CoTsv5x_QfoGd"
-CLIENT_SECRET = "_WQu_Hoemd"
 
-
-def get_blog_posts(keyword, total_count=1000):
+def get_blog_posts(self, keyword, total_count=1000):
     """네이버 블로그 검색 API를 통해 블로그 포스트를 검색합니다."""
     encText = urllib.parse.quote(keyword)
     all_items = []

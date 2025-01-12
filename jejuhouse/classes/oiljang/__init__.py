@@ -9,7 +9,3 @@ class OilJang:
     from classes.oiljang.set import set_data
     from classes.oiljang.export import export_data
 
-
-    
-    
-
