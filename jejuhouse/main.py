@@ -1,7 +1,8 @@
-from auction import Auction
-from blog import NaverBlog
-from kyocharo import Kyocharo
-from oiljang import OilJang
-from youtube import Youtube
+from class.auction import Auction
+from class.blog import NaverBlog
+from class.kyocharo import Kyocharo
+from class.oiljang import OilJang
+from class.youtube import Youtube
 
-a = Auction()
+a = OilJang()
+a.get_data()
