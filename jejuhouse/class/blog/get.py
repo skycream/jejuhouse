@@ -4,3 +4,6 @@ def get_data(self):
 
 
 
+def hello(self):
+    pass
+
