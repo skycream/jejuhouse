@@ -43,9 +43,6 @@ def get_data(self):
             break
 
 
-    
-
-
 def crawler(last_num):
     try:
         search_num = str(last_num + 1)
