@@ -6,42 +6,48 @@ import pickle
 import time
 import os
 
-def get_data(self):
-    # 마지막 pkl파일에 삽입된 매물번호를 불러오기, 
-    # pkl 파일이 없으면 pkl 파일을 생성하고 4406936로 삽입
-    data_list = []
-    data = False
-    while data is not None:
-        try:
-            # 파일 존재 여부 확인 및 데이터 로드
-            if os.path.exists('latest_oiljang_property_num.pkl'):
-                with open('latest_oiljang_property_num.pkl', 'rb') as f:
-                    last_num = pickle.load(f)
-            else:
-                raise FileNotFoundError
-        except (FileNotFoundError, EOFError):  # 파일이 없거나 비어 있을 경우 기본값 설정
-            last_num = 4411322
-            with open('latest_oiljang_property_num.pkl', 'wb') as f:
-                pickle.dump(last_num, f)
-            print(f"초기 매물 번호 {last_num}으로 설정되었습니다.")
 
+def get_data(self):
+    data_list = []
+    none_counter = 0  # None 결과 연속 카운터
+    
+    try:
+        # 파일 존재 여부 확인 및 데이터 로드
+        if os.path.exists('latest_oiljang_property_num.pkl'):
+            with open('latest_oiljang_property_num.pkl', 'rb') as f:
+                last_num = pickle.load(f)
+        else:
+            raise FileNotFoundError
+    except (FileNotFoundError, EOFError):  # 파일이 없거나 비어 있을 경우 기본값 설정
+        last_num = 4412075
+        with open('latest_oiljang_property_num.pkl', 'wb') as f:
+            pickle.dump(last_num, f)
+        print(f"초기 매물 번호 {last_num}으로 설정되었습니다.")
+
+    while none_counter < 3:  # None이 3번 연속으로 나올 때까지 실행
         print(f"현재 매물 번호: {last_num}")
         data = crawler(last_num)
 
         if data is not None:
-            # 다음 매물 번호 저장
-            with open('latest_oiljang_property_num.pkl', 'wb') as f:
-                pickle.dump(last_num + 1, f)
-            print(data)
-            print('매물을 찾았습니다. 계속해서 다음 매물을 찾습니다.')
+            none_counter = 0  # None이 아닌 데이터를 찾으면 카운터 리셋
             data_list.append(json.loads(data))
+            print('매물을 찾았습니다. 계속해서 다음 매물을 찾습니다.')
             print(f"현재 데이터 수: {len(data_list)}")
             print(data_list[-1]['매물명'])
+            
+            # 성공한 경우에만 다음 매물 번호 저장
+            with open('latest_oiljang_property_num.pkl', 'wb') as f:
+                pickle.dump(last_num + 1, f)
+            
             time.sleep(1)
         else:
-            print("매물이 없거나 에러가 발견되었습니다. 종료합니다.")
-            return data_list
-            break
+            none_counter += 1  # None인 경우 카운터 증가
+            print(f"매물이 없습니다. (연속 {none_counter}번 실패)")
+
+        last_num += 1  # 다음 매물 번호로 이동
+
+    print(f"연속 {none_counter}번 매물을 찾지 못해 종료합니다.")
+    return data_list
 
 
 def crawler(last_num):
