@@ -20,7 +20,7 @@ def get_data(self):
             else:
                 raise FileNotFoundError
         except (FileNotFoundError, EOFError):  # 파일이 없거나 비어 있을 경우 기본값 설정
-            last_num = 4407310
+            last_num = 4411322
             with open('latest_oiljang_property_num.pkl', 'wb') as f:
                 pickle.dump(last_num, f)
             print(f"초기 매물 번호 {last_num}으로 설정되었습니다.")
@@ -40,6 +40,7 @@ def get_data(self):
             time.sleep(1)
         else:
             print("매물이 없거나 에러가 발견되었습니다. 종료합니다.")
+            return data_list
             break
 
 
