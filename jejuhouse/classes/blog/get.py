@@ -5,22 +5,24 @@ from bs4 import BeautifulSoup
 import urllib.parse
 import urllib.request
 import time
-import pickle
-import os
 from pathlib import Path
 
 
-def get_data(self):
-    # 기존 데이터 로드
-    data_file = '../latest_NaverBlog_link.pkl'
-    if os.path.exists(data_file):
-        with open(data_file, 'rb') as f:
-            stored_posts = pickle.load(f)
-        # 기존 링크들의 집합 생성
-        existing_links = {post['링크'] for post in stored_posts}
-    else:
-        stored_posts = []
-        existing_links = set()
+def get_data(self, existing_data=None):
+    """
+    네이버 블로그 데이터를 수집합니다.
+
+    Args:
+        existing_data (list, optional): 기존 수집된 데이터 리스트. None이면 빈 리스트로 시작.
+
+    Returns:
+        list: 업데이트된 전체 데이터 리스트
+    """
+    if existing_data is None:
+        existing_data = []
+
+    # 기존 링크들의 집합 생성
+    existing_links = {post['링크'] for post in existing_data}
 
     # 키워드 생성 및 검색
     keywords = generate_keywords()
@@ -33,6 +35,8 @@ def get_data(self):
     end_date_str = end_date.strftime('%Y-%m-%d')
 
     new_posts = []
+    update_count = 0
+    add_count = 0
 
     for keyword in keywords:
         print(f"\n키워드 '{keyword}' 검색 중...")
@@ -72,15 +76,28 @@ def get_data(self):
         else:
             print(f"키워드 '{keyword}' 검색 결과를 가져오는데 실패했습니다.")
 
+    # 데이터 병합 및 중복 제거
     if new_posts:
-        # 기존 데이터와 새로운 데이터 병합
-        stored_posts.extend(new_posts)
+        # 링크를 키로 하는 딕셔너리 생성
+        data_dict = {post['링크']: post for post in existing_data}
 
-        # PKL 파일 저장 (상위 폴더에)
-        with open(data_file, 'wb') as f:
-            pickle.dump(stored_posts, f)
+        # 새로운 데이터 처리
+        for post in new_posts:
+            if post['링크'] in data_dict:
+                old_date = datetime.strptime(data_dict[post['링크']]['작성일자'], '%Y-%m-%d')
+                new_date = datetime.strptime(post['작성일자'], '%Y-%m-%d')
 
-        # JSON 파일도 함께 저장 (outputs 폴더에)
+                if new_date >= old_date:
+                    data_dict[post['링크']] = post
+                    update_count += 1
+            else:
+                data_dict[post['링크']] = post
+                add_count += 1
+
+        # 결과를 리스트로 변환
+        updated_data = list(data_dict.values())
+
+        # JSON 파일 저장 (outputs 폴더에)
         output_dir = Path('outputs')
         output_dir.mkdir(exist_ok=True)
 
@@ -89,34 +106,22 @@ def get_data(self):
             json.dump(new_posts, f, ensure_ascii=False, indent=2)
 
         print(f"\n검색 기간: {start_date_str} ~ {end_date_str}")
-        print(f"총 {len(new_posts)}개의 새로운 포스트를 수집했습니다.")
-        print(f"누적 데이터 건수: {len(stored_posts)}개")
-        print(f"결과가 {filename}에 저장되었습니다.")
+        print(f"새로 추가된 포스트: {add_count}개")
+        print(f"업데이트된 포스트: {update_count}개")
+        print(f"누적 데이터 건수: {len(updated_data)}개")
+        print(f"새로운 데이터가 {filename}에 저장되었습니다.")
+
+        return updated_data
     else:
         print("\n검색된 결과가 없습니다.")
-
-
-def load_existing_links():
-    """기존에 수집된 링크들을 로드합니다."""
-    pickle_file = 'collected_links.pkl'
-    if os.path.exists(pickle_file):
-        with open(pickle_file, 'rb') as f:
-            return pickle.load(f)
-    return set()
-
-
-def save_links(existing_links, new_links):
-    """새로운 링크들을 저장합니다."""
-    existing_links.update(new_links)
-    with open('collected_links.pkl', 'wb') as f:
-        pickle.dump(existing_links, f)
+        return existing_data
 
 
 def generate_keywords():
     """검색 키워드 조합을 생성합니다."""
     locations = ["제주도", "서귀포", "제주시"]
-    categories = ["부동산", "토지", "주택", "아파트", "원룸", "단독주택", "타운하우스", "상가"]
-    deal_types = ["매매", "급매", "전세", "월세", "년세", "초급매", "급급매"]
+    categories = ["부동산", "토지", "주택", "아파트", "단독주택", "타운하우스", "상가"]
+    deal_types = ["매매", "급매", "전세", "월세", "연세", "초급매", "급급매"]
 
     keywords = []
     for location in locations:

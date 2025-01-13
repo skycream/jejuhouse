@@ -1,29 +1,24 @@
 import requests
 import xml.etree.ElementTree as ET
-from datetime import datetime, date
+from datetime import datetime
 from typing import Dict, List
-import pickle
-import os
 import time
 
 
-def get_data():
+def get_data(existing_data: List[Dict] = None) -> List[Dict]:
+    """
+    기존 데이터 리스트를 받아서 새로운 데이터를 추가하고 업데이트된 전체 리스트를 반환합니다.
+
+    Args:
+        existing_data: 기존 데이터 리스트. None인 경우 빈 리스트로 시작
+
+    Returns:
+        List[Dict]: 업데이트된 전체 데이터 리스트
+    """
     print('서울 및 제주도의 경매 데이터 조회를 시작합니다.')
 
-    try:
-        # 현재 파일의 절대 경로 (classes/auction/get.py)
-        current_file = os.path.abspath(__file__)
-
-        # 최상위 jejuhouse 디렉토리 찾기
-        # classes -> auction -> jejuhouse(내부) -> jejuhouse(외부) -> jejuhouse(최상위)
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(current_file)))))
-
-        # PKL 파일 경로 설정
-        pkl_filename = os.path.join(project_root, 'lastest_auction_bid.pkl')
-        print(f"데이터 저장 경로: {pkl_filename}")
-    except Exception as e:
-        print(f"경로 설정 중 오류 발생: {str(e)}")
-        raise
+    if existing_data is None:
+        existing_data = []
 
     base_url = 'http://openapi.onbid.co.kr/openapi/services/KamcoPblsalThingInquireSvc/getKamcoPbctCltrList'
     service_key = 'qc3aOYZCyxYqx5N7K1ymM%2FQ40DOEBsK2%2FViC%2BKqrXG7UTDadEhH0MEHjuspVeOpq0ZEjOxczf5qaOIJ91%2F5wlQ%3D%3D'
@@ -51,53 +46,21 @@ def get_data():
     jeju_params['SIDO'] = '제주특별자치도'
     jeju_properties = get_region_data(url, jeju_params, '제주')
 
-    # 전체 데이터 병합
-    all_properties = seoul_properties + jeju_properties
-    all_properties.sort(key=lambda x: x['입찰시작'])  # 입찰시작 시간순 정렬
+    # 새로운 데이터 병합
+    new_properties = seoul_properties + jeju_properties
 
-    # 기존 데이터 로드 및 업데이트
-    pkl_filename = 'onbid_properties.pkl'
-    existing_data = load_existing_data(pkl_filename)
-    updated_data = update_property_data(existing_data, all_properties)
-    save_data(updated_data, pkl_filename)
+    # 기존 데이터와 새로운 데이터 병합
+    updated_data = update_property_data(existing_data, new_properties)
 
-    print("\n=== 서울/제주 진행 중인 경매 물건 목록 ===\n")
+    # 결과 요약 출력
+    seoul_items = [prop for prop in new_properties if '서울특별시' in prop['소재지']]
+    jeju_items = [prop for prop in new_properties if '제주특별자치도' in prop['소재지']]
 
-    # 서울 물건 출력
-    print("\n--- 서울특별시 물건 ---")
-    seoul_items = [prop for prop in all_properties if '서울특별시' in prop['소재지']]
-    for prop in seoul_items:
-        print(f"▶ 물건번호: {prop['물건번호']}")
-        print(f"▶ 물건종류: {prop['물건종류']}")
-        print(f"▶ 소재지: {prop['소재지']}")
-        print(f"▶ 최저입찰가: {prop['최저입찰가']} ({prop['비율']})")
-        print(f"▶ 감정가: {prop['감정가']}")
-        print(f"▶ 입찰기간: {prop['입찰시작']} ~ {prop['입찰마감']}")
-        print(f"▶ 현재상태: {prop['상태']}")
-        print(f"▶ 상세내용: {prop['상세내용']}")
-        print(f"▶ 상세페이지: {prop['상세페이지']}\n")
-        print("-" * 80 + "\n")
-
-    # 제주 물건 출력
-    print("\n--- 제주특별자치도 물건 ---")
-    jeju_items = [prop for prop in all_properties if '제주특별자치도' in prop['소재지']]
-    for prop in jeju_items:
-        print(f"▶ 물건번호: {prop['물건번호']}")
-        print(f"▶ 물건종류: {prop['물건종류']}")
-        print(f"▶ 소재지: {prop['소재지']}")
-        print(f"▶ 최저입찰가: {prop['최저입찰가']} ({prop['비율']})")
-        print(f"▶ 감정가: {prop['감정가']}")
-        print(f"▶ 입찰기간: {prop['입찰시작']} ~ {prop['입찰마감']}")
-        print(f"▶ 현재상태: {prop['상태']}")
-        print(f"▶ 상세내용: {prop['상세내용']}")
-        print(f"▶ 상세페이지: {prop['상세페이지']}\n")
-        print("-" * 80 + "\n")
-
+    print(f"\n새로 수집된 데이터:")
     print(f"서울 물건 수: {len(seoul_items)}개")
     print(f"제주 물건 수: {len(jeju_items)}개")
-    print(f"전체 물건 수: {len(all_properties)}개")
-    print(f"누적된 전체 데이터 수: {len(updated_data)}개")
-    print(f"데이터가 {pkl_filename} 파일에 저장되었습니다.")
+    print(f"전체 수집 물건 수: {len(new_properties)}개")
+    print(f"최종 데이터 수: {len(updated_data)}개")
 
     return updated_data
 
@@ -172,25 +135,9 @@ def get_total_count(xml_response: str) -> int:
     return int(total_count.text) if total_count is not None else 0
 
 
-def load_existing_data(filename: str) -> List[Dict]:
-    if os.path.exists(filename):
-        with open(filename, 'rb') as f:
-            return pickle.load(f)
-    return []
-
-
 def update_property_data(existing_data: List[Dict], new_data: List[Dict]) -> List[Dict]:
-    """
-    기존 데이터와 새로운 데이터를 병합합니다.
-    동일한 물건번호가 있는 경우 최신 데이터로 업데이트합니다.
+    """기존 데이터와 새로운 데이터를 병합하여 반환합니다."""
 
-    Args:
-        existing_data (List[Dict]): 기존 pkl 파일의 데이터
-        new_data (List[Dict]): 새로 수집한 데이터
-
-    Returns:
-        List[Dict]: 업데이트된 데이터 목록
-    """
     # 물건번호를 키로 하는 딕셔너리 생성
     data_dict = {item['물건번호']: {
         'data': item,
@@ -231,37 +178,10 @@ def update_property_data(existing_data: List[Dict], new_data: List[Dict]) -> Lis
     return [item['data'] for item in data_dict.values()]
 
 
-def save_data(data: List[Dict], filename: str):
-    """
-    데이터를 pkl 파일로 저장합니다.
-    파일이 위치할 디렉토리가 없는 경우 생성합니다.
-
-    Args:
-        data (List[Dict]): 저장할 데이터
-        filename (str): 저장할 파일 경로
-    """
-    try:
-        # 디렉토리 확인 및 생성
-        directory = os.path.dirname(filename)
-        if directory and not os.path.exists(directory):
-            os.makedirs(directory)
-            print(f"디렉토리 생성: {directory}")
-
-        # 데이터 저장
-        with open(filename, 'wb') as f:
-            pickle.dump(data, f)
-
-        print(f"데이터가 {filename} 파일에 저장되었습니다.")
-    except Exception as e:
-        print(f"데이터 저장 중 오류 발생: {str(e)}")
-        raise
-
-
 def get_region_data(url: str, params: dict, region_name: str) -> List[Dict]:
     """특정 지역의 경매 데이터를 수집하는 함수"""
     properties = []
     total_count = 0
-    page = 1
 
     # 첫 페이지 조회로 전체 데이터 수 확인
     response = requests.get(url, params=params)
@@ -286,7 +206,6 @@ def get_region_data(url: str, params: dict, region_name: str) -> List[Dict]:
                 print(f"데이터 조회 실패: {response.status_code}")
                 continue
 
-            # 과도한 API 호출 방지를 위한 잠시 대기
             time.sleep(0.5)
 
     return properties
