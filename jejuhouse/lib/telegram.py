@@ -19,22 +19,23 @@ class TelegramSender:
 
     def format_property_message(self, property):
         # 기본 정보 포맷팅
-        message = f"🏠 <b>{property['매물명']}</b>\n"
+        message = f"--------------------------------\n"
+        message += f"🏠 <b>{property['매물명']}</b>\n"
         
         # 가격 정보 추가
         if '매매가격' in property:
-            message += f"💰 매매가: {property['매매가격']}\n"
+            message += f" 매매가: {property['매매가격']}\n"
         if '전세금' in property:
-            message += f"💰 전세금: {property['전세금']}\n"
+            message += f" 전세금: {property['전세금']}\n"
         if '보증금' in property and '월세' in property:
-            message += f"💰 보증금/월세: {property['보증금']}/{property['월세']}\n"
+            message += f" 보증금/월세: {property['보증금']}/{property['월세']}\n"
         
         # 면적 정보
         if '전용면적' in property:
-            message += f"📏 전용면적: {property['전용면적']}\n"
+            message += f" 전용면적: {property['전용면적']}\n"
         # 위치 정보
         if '소재지' in property:
-            message += f"📍 위치: {property['소재지']}\n"
+            message += f" {property['소재지']}\n"
         if 'link' in property:
             message += f"🔗 Link: {property['link']}\n"
 
