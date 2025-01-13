@@ -19,5 +19,4 @@ k_data = k.get_data()
 
 data = {'온비드' : a_data, '네이버블로그' : b_data, '오일장': o_data, '교차로': k_data}
 print(data)
-print(len(data['오일장']))
-print(len(data['교차로']))
+
