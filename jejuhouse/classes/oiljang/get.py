@@ -33,6 +33,7 @@ def get_data(self):
             data_list.append(json.loads(data))
             print('매물을 찾았습니다. 계속해서 다음 매물을 찾습니다.')
             print(f"현재 데이터 수: {len(data_list)}")
+            print(data_list[-1])
             print(data_list[-1]['매물명'])
             
             # 성공한 경우에만 다음 매물 번호 저장
@@ -60,10 +61,11 @@ def crawler(last_num):
         bs = bs4.BeautifulSoup(html, 'html.parser')
         rows = bs.select("table.info_t tr")
         table_data = set_table_data(rows)
-
         # detail_data 처리: Tag 객체를 문자열로 변환
         detail_data = bs.select_one("div.detail_text_cont")
         if detail_data:
+            table_data['플랫폼'] = '오일장'
+            table_data['link'] = 'https://www.jejuall.com/CProperty/detail?num=' + str(search_num)
             table_data['상세정보'] = detail_data.decode_contents().strip()  # 문자열로 변환
         total_data = table_data
         if total_data == {}:
@@ -132,5 +134,4 @@ def set_table_data(table_html_data):
                 data[key2] = {"주차대수": main_value, "비율": extra_value}
             else:
                 data[key2] = value2
-
     return data

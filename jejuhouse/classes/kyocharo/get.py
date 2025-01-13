@@ -30,6 +30,8 @@ def get_api_data(url, latest_num):
             if current_num > latest_num:
                 # 오일장 형식과 동일하게 구조화하되 모든 데이터 보존
                 converted_info = {
+                    '플랫폼': '교차로',
+                    'link': 'https://land.jejukcr.com/offer/'+str(listing.get('offer_idx', '')),
                     '매물정보': {
                         '매물번호': listing.get('offer_idx', ''),
                         '종류': listing.get('cateid_str', ''),
@@ -39,9 +41,9 @@ def get_api_data(url, latest_num):
                         '건물종류': listing.get('kind_STR', ''),
                         '신규매물여부': listing.get('new_BOOL', '')
                     },
-                    '매물명': f"{listing.get('title_STR', '')}",
+                    '매물명': listing.get('summary', ''),
                     '매물종류': listing.get('cateid_str', ''),
-                    '소재지': listing.get('addr', ''),
+                    '소재지': listing.get('addr_full', ''),
                     '도로명주소': listing.get('road_addr', ''),
                     '매매가격': f"{listing.get('sale_price', '')}만원" if listing.get('trade_str') == '매매' else '',
                     '융자금': '',  # 교차로 데이터에 없는 필드이지만 형식 통일을 위해 추가
@@ -50,19 +52,19 @@ def get_api_data(url, latest_num):
                     '보증금': f"{listing.get('deposit', '')}만원" if listing.get('deposit') else '',
                     '월세': f"{listing.get('monthly_rent', '')}만원" if listing.get('monthly_rent') and listing.get('trade_str') == '월세' else '',
                     '년세': f"{listing.get('monthly_rent', '')}만원" if listing.get('monthly_rent') and listing.get('trade_str') == '년세' else '',
-                    '권리금': '0원',
+                    # '권리금': '0원',
                     '공급면적': f"{listing.get('area1', '')} ㎡" if listing.get('area1') else '0 ㎡',
                     '전용면적': f"{listing.get('area2', '')}㎡" if listing.get('area2') else '0㎡',
                     '대지면적': f"{listing.get('land_area', '')} ㎡" if listing.get('land_area') else '',
                     '연면적': f"{listing.get('total_area', '')} ㎡" if listing.get('total_area') else '',
-                    '월관리비': listing.get('maintenance_cost', '0원'),
+                    '월관리비': listing.get('maintenance_cost', ''),
                     '방향': listing.get('direction_STR', ''),
                     '방수 / 욕실수': listing.get('rooms_bathrooms', ''),
                     '입주가능일': listing.get('live_in_state_STR', ''),
                     '사용승인일': listing.get('completion_date', ''),
                     '해당동': listing.get('dong_number', ''),
                     '해당층총 층수': f"{listing.get('current_floor', '')}/{listing.get('total_floor', '')}",
-                    '총세대수': listing.get('households_LABEL', ''),
+                    # '총세대수': listing.get('households_LABEL', ''),
                     '총주차대수': {
                         '주차대수': listing.get('parking_count', ''),
                         '비율': None
