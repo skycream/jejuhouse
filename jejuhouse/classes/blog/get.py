@@ -57,7 +57,7 @@ def get_data(self):
 
                     post_data = {
                         '블로그 제목': title,
-                        '링크': post['link'],
+                        'link': post['link'],
                         '작성일자': post_timestamp.strftime('%Y-%m-%d %H:%M:%S'),
                         '상세내용': content or post['description']
                     }

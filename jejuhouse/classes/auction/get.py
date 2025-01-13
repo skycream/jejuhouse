@@ -116,7 +116,7 @@ def parse_property_data(xml_response: str) -> List[Dict]:
                 '상태': status,
                 '비율': item.find('FEE_RATE').text,
                 '상세내용': item.find('GOODS_NM').text,
-                '상세페이지': detail_url
+                'link': detail_url
             }
             properties.append(property_info)
 
