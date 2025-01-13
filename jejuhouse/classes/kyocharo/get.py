@@ -11,7 +11,7 @@ def get_data(self):
     else:
         latest_num = 0
     total_data = get_api_data(self.url, latest_num)
-    print(total_data)
+    # print(total_data)
     return total_data
 
 def get_api_data(url, latest_num):
