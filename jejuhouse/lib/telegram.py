@@ -5,7 +5,7 @@ from datetime import datetime
 class TelegramSender:
     def __init__(self):
         self.bot_token = "5523500847:AAEJ46kC3hyKH3p3pnfC-7KoUfz0Ul-Sv3k"  # 여기에 봇 토큰을 입력하세요
-        self.chat_id = "-4247377251"   
+        self.chat_id = "-1002331576556"   
 
     def send_message(self, text):
         url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
