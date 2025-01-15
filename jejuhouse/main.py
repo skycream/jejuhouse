@@ -22,8 +22,8 @@ def filter_properties_by_keyword(data):
     # 오일장과 교차로 데이터 모두 확인
     for property in data:
         # 매물명에 '급매'가 포함되어 있는지 확인
-        if '매물명' in property and '급매' in property['매물명'] and ('아파트' or '토지') not in property['매물종류']:
-            urgent_sales.append(property)
+        if '매물명' in property and '급매' in property['매물명'] and ('아파트' or '토지' or '임야' or '원룸' or '투룸' or '쓰리룸' or '오피스텔') not in property['매물종류']:
+                urgent_sales.append(property)
     
     return urgent_sales
 
