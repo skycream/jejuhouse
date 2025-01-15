@@ -17,15 +17,25 @@ def format_data(o_data, k_data):
     print(formatted_json)
 
 def filter_properties_by_keyword(data):
-    urgent_sales = []
-    
-    # 오일장과 교차로 데이터 모두 확인
-    for property in data:
-        # 매물명에 '급매'가 포함되어 있는지 확인
-        if '매물명' in property and '급매' in property['매물명'] and ('아파트' and '토지' and '임야' and '원룸' and '투룸' and '쓰리룸' and '오피스텔') not in property['매물종류']:
-                urgent_sales.append(property)
-    
-    return urgent_sales
+   urgent_sales = []
+   excluded_types = ['아파트', '토지', '임야', '원룸', '투룸', '쓰리룸', '오피스텔','빌라','연립','다세대']
+   bypass_keywords = ['통매매']  # 프리패스 키워드 목록
+   
+   for property in data:
+       if '매물명' in property:
+           # 프리패스 키워드가 있는지 먼저 확인
+           has_bypass = any(keyword in property['매물명'] for keyword in bypass_keywords)
+           
+           if has_bypass:
+               # 프리패스 키워드가 있으면 바로 추가
+               urgent_sales.append(property)
+           elif '급매' in property['매물명']:
+               # 프리패스가 아닌 경우 기존 로직 실행
+               is_excluded = any(excluded in property['매물종류'] for excluded in excluded_types)
+               if not is_excluded:
+                   urgent_sales.append(property)
+   
+   return urgent_sales
 
 def send_urgent_properties_to_telegram(properties):
     telegram = TelegramSender()

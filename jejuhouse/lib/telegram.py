@@ -37,6 +37,5 @@ class TelegramSender:
             message += f" {property['소재지']}\n"
         if 'link' in property:
             message += f"🔗 Link: {property['link']}\n"
-        message += "--------------------------------------\n"
 
         return message
