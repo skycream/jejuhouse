@@ -19,8 +19,7 @@ class TelegramSender:
 
     def format_property_message(self, property):
         # 기본 정보 포맷팅
-        message = f"--------------------------------\n"
-        message += f"🏠 <b>{property['매물명']}</b>\n"
+        message = f"🏠 <b>{property['매물명']}</b>\n"
         
         # 가격 정보 추가
         if '매매가격' in property:
@@ -38,5 +37,6 @@ class TelegramSender:
             message += f" {property['소재지']}\n"
         if 'link' in property:
             message += f"🔗 Link: {property['link']}\n"
+        message += "--------------------------------------\n"
 
         return message
