@@ -56,6 +56,7 @@ def get_data(self):
                         title = BeautifulSoup(title, 'html.parser').get_text()
 
                     post_data = {
+                        '플랫폼': '네이버블로그',
                         '블로그 제목': title,
                         'link': post['link'],
                         '작성일자': post_timestamp.strftime('%Y-%m-%d %H:%M:%S'),
