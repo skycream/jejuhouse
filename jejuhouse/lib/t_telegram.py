@@ -6,8 +6,8 @@ import time
 
 class TelegramSender:
     def __init__(self):
-        self.bot_token = "5523500847:AAEJ46kC3hyKH3p3pnfC-7KoUfz0Ul-Sv3k"
-        self.chat_id = "-1002331576556"
+        self.bot_token = "7811421741:AAHFTL6Vj6U1WhuzsJ7P2VWvN67IGAkDH9s"
+        self.chat_id = "-1002346439576"
         self.max_retries = 3
         self.retry_delay = 5
 
@@ -32,15 +32,11 @@ class TelegramSender:
                     print("✅ 메시지 전송 성공")
                     return response_data
 
-                # Rate limit 초과 처리
-                if response.status_code == 429:
-                    retry_after = response_data.get('parameters', {}).get('retry_after', 5)
-                    print(f"⚠️ 요청 제한: {retry_after}초 대기 중...")
-                    time.sleep(retry_after)
-                    continue  # 재시도
-
                 print(f"⚠️ 전송 실패 (시도 {attempt + 1}/{self.max_retries})")
                 print(f"에러 메시지: {response_data.get('description', '알 수 없는 에러')}")
+
+                if attempt < self.max_retries - 1:
+                    time.sleep(self.retry_delay)
 
             except requests.exceptions.RequestException as e:
                 print(f"네트워크 에러 발생: {str(e)}")

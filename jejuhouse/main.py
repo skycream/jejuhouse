@@ -4,7 +4,6 @@ from classes.oiljang import OilJang
 from classes.kyocharo import Kyocharo
 from classes.youtube import Youtube
 from lib.telegram import TelegramSender
-
 import json
 import time
 import os
@@ -119,6 +118,7 @@ def process_youtube_data(youtube, telegram, sent_data):
 
 
 # 메인 실행 부분
+a = Auction()
 o = OilJang()
 k = Kyocharo()
 youtube = Youtube()

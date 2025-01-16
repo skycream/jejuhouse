@@ -15,7 +15,7 @@ def get_data(existing_data: List[Dict] = None) -> List[Dict]:
     Returns:
         List[Dict]: 업데이트된 전체 데이터 리스트
     """
-    print('서울 및 제주도의 경매 데이터 조회를 시작합니다.')
+    print('제주도의 경매 데이터 조회를 시작합니다.')
 
     if existing_data is None:
         existing_data = []
@@ -36,28 +36,21 @@ def get_data(existing_data: List[Dict] = None) -> List[Dict]:
         'numOfRows': 100
     }
 
-    # 서울 데이터 조회
-    seoul_params = base_params.copy()
-    seoul_params['SIDO'] = '서울특별시'
-    seoul_properties = get_region_data(url, seoul_params, '서울')
-
     # 제주 데이터 조회
     jeju_params = base_params.copy()
     jeju_params['SIDO'] = '제주특별자치도'
     jeju_properties = get_region_data(url, jeju_params, '제주')
 
     # 새로운 데이터 병합
-    new_properties = seoul_properties + jeju_properties
+    new_properties = jeju_properties
 
     # 기존 데이터와 새로운 데이터 병합
     updated_data = update_property_data(existing_data, new_properties)
 
     # 결과 요약 출력
-    seoul_items = [prop for prop in new_properties if '서울특별시' in prop['소재지']]
     jeju_items = [prop for prop in new_properties if '제주특별자치도' in prop['소재지']]
 
     print(f"\n새로 수집된 데이터:")
-    print(f"서울 물건 수: {len(seoul_items)}개")
     print(f"제주 물건 수: {len(jeju_items)}개")
     print(f"전체 수집 물건 수: {len(new_properties)}개")
     print(f"최종 데이터 수: {len(updated_data)}개")
@@ -135,16 +128,22 @@ def get_total_count(xml_response: str) -> int:
     return int(total_count.text) if total_count is not None else 0
 
 
-def update_property_data(existing_data: List[Dict], new_data: List[Dict]) -> List[Dict]:
+def update_property_data(existing_data, new_data):
     """기존 데이터와 새로운 데이터를 병합하여 반환합니다."""
+    # 데이터가 반복 가능한 리스트인지 확인
+    if not isinstance(existing_data, list):
+        print("⚠️ existing_data가 리스트가 아닙니다. 빈 리스트로 초기화합니다.")
+        existing_data = []
+    if not isinstance(new_data, list):
+        print("⚠️ new_data가 리스트가 아닙니다. 빈 리스트로 초기화합니다.")
+        new_data = []
 
-    # 물건번호를 키로 하는 딕셔너리 생성
+    # 기존 데이터와 새로운 데이터 병합
     data_dict = {item['물건번호']: {
         'data': item,
         'timestamp': datetime.strptime(item['입찰마감'], '%Y-%m-%d %H:%M')
     } for item in existing_data}
 
-    # 새로운 데이터 처리
     update_count = 0
     add_count = 0
 
@@ -153,7 +152,6 @@ def update_property_data(existing_data: List[Dict], new_data: List[Dict]) -> Lis
         new_timestamp = datetime.strptime(item['입찰마감'], '%Y-%m-%d %H:%M')
 
         if 물건번호 in data_dict:
-            # 기존 데이터가 있는 경우, 타임스탬프 비교
             if new_timestamp >= data_dict[물건번호]['timestamp']:
                 data_dict[물건번호] = {
                     'data': item,
@@ -161,7 +159,6 @@ def update_property_data(existing_data: List[Dict], new_data: List[Dict]) -> Lis
                 }
                 update_count += 1
         else:
-            # 새로운 데이터 추가
             data_dict[물건번호] = {
                 'data': item,
                 'timestamp': new_timestamp
@@ -169,13 +166,11 @@ def update_property_data(existing_data: List[Dict], new_data: List[Dict]) -> Lis
             add_count += 1
 
     print(f"\n데이터 업데이트 현황:")
-    print(f"- 기존 데이터 수: {len(existing_data)}개")
     print(f"- 새로 추가된 데이터: {add_count}개")
     print(f"- 업데이트된 데이터: {update_count}개")
-    print(f"- 최종 데이터 수: {len(data_dict)}개")
 
-    # 딕셔너리를 리스트로 변환하여 반환
     return [item['data'] for item in data_dict.values()]
+
 
 
 def get_region_data(url: str, params: dict, region_name: str) -> List[Dict]:
