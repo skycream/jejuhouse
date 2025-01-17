@@ -26,7 +26,7 @@ def format_data(o_data, k_data):
 def filter_properties_by_keyword(data):
    urgent_sales = []
    excluded_types = ['아파트', '토지', '임야', '원룸', '투룸', '쓰리룸', '오피스텔','빌라','연립','다세대']
-   bypass_keywords = ['통매매','특급','대박','미친','10%','9%','8%','7%','사거리','코너','완벽']  # 프리패스 키워드 목록
+   bypass_keywords = ['통매매','특급','대박','미친','10%','9%','8%','7%','사거리','코너','완벽','손해']  # 프리패스 키워드 목록
    
    for property in data:
        if '매물명' in property:
