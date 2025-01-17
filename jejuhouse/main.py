@@ -11,6 +11,7 @@ from datetime import datetime
 
 # 설정
 SENT_DATA_FILE = "sent_data.json"
+YOUTUBE_CHECK_FILE = "youtube_last_check.json"
 CHECK_INTERVAL = 3600  # 1시간(초 단위)
 
 
@@ -83,6 +84,35 @@ def is_operating_hours():
     current_hour = datetime.now().hour
     return not (2 <= current_hour < 9)
 
+def get_last_youtube_check():
+    try:
+        if os.path.exists(YOUTUBE_CHECK_FILE):
+            with open(YOUTUBE_CHECK_FILE, 'r') as f:
+                data = json.load(f)
+                return datetime.strptime(data['last_check'], '%Y-%m-%d %H:%M:%S')
+    except Exception as e:
+        print(f"⚠️ YouTube 마지막 체크 시간 로드 중 오류: {str(e)}")
+    return None
+
+
+def save_youtube_check():
+    try:
+        with open(YOUTUBE_CHECK_FILE, 'w') as f:
+            json.dump({'last_check': datetime.now().strftime('%Y-%m-%d %H:%M:%S')}, f)
+    except Exception as e:
+        print(f"⚠️ YouTube 체크 시간 저장 중 오류: {str(e)}")
+
+
+def should_check_youtube():
+    if not is_operating_hours():
+        return False
+
+    last_check = get_last_youtube_check()
+    if last_check is None:
+        return True
+
+    time_diff = datetime.now() - last_check
+    return time_diff.total_seconds() >= 7200  # 2시간 (7200초)
 
 def process_youtube_data(youtube, telegram, sent_data):
     try:
@@ -99,12 +129,13 @@ def process_youtube_data(youtube, telegram, sent_data):
                 continue
 
             video_id = item.get('링크', '').split('=')[-1]
-            if video_id and video_id not in sent_data and '급매' in item.get('제목', ''):
+            # '급매' 키워드 체크 제거
+            if video_id and video_id not in sent_data:
                 new_items.append(item)
                 sent_data.add(video_id)
 
         if new_items:
-            print(f"\n🆕 새로운 YouTube 급매 발견: {len(new_items)}개")
+            print(f"\n🆕 새로운 YouTube 매물 발견: {len(new_items)}개")
             for item in new_items:
                 try:
                     message = telegram.format_property_message(item)
@@ -121,7 +152,7 @@ def process_youtube_data(youtube, telegram, sent_data):
 
             save_sent_data(sent_data)
         else:
-            print("📭 새로운 YouTube 급매 매물 없음")
+            print("📭 새로운 YouTube 매물 없음")
 
         return sent_data
 
@@ -159,12 +190,16 @@ while True:
     else:
         print("\n급매 매물이 없습니다.")
 
-    # YouTube 데이터 처리 (운영 시간에만)
-    if is_operating_hours():
+    # YouTube 데이터 처리 (운영 시간에만, 2시간 간격)
+    if should_check_youtube():
         print(f"\n📊 YouTube 데이터 수집 시작 ({current_time})")
         sent_data = process_youtube_data(youtube, TelegramSender(), sent_data)
+        save_youtube_check()  # 체크 시간 저장
     else:
-        print(f"\n⏰ YouTube 운영 시간이 아님 ({current_time})")
+        if not is_operating_hours():
+            print(f"\n⏰ YouTube 운영 시간이 아님 ({current_time})")
+        else:
+            print(f"\n⏰ YouTube 다음 체크까지 대기 중... ({current_time})")
 
     print(f"\n⏳ 다음 체크까지 대기 중... ({current_time})")
     time.sleep(60 * 3)  # 3분 대기
